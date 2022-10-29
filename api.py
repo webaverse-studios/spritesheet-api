@@ -750,7 +750,7 @@ def add_noise(img,noise_mix,noise_injector_px_size,
         print("vertical symmetry applied")
 
 
-def do_run(prompt):
+def do_run(_prompt):
   seed = args.seed
   print(range(args.start_frame, args.max_frames))
 
@@ -875,12 +875,7 @@ def do_run(prompt):
   
       target_embeds, weights = [], []
       
-      if args.prompts_series is not None and frame_num >= len(args.prompts_series):
-        frame_prompt = args.prompts_series[-1]
-      elif args.prompts_series is not None:
-        frame_prompt = args.prompts_series[frame_num]
-      else:
-        frame_prompt = []
+      frame_prompt = [ _prompt ]
       
       print(args.image_prompts_series)
       if args.image_prompts_series is not None and frame_num >= len(args.image_prompts_series):
@@ -1092,7 +1087,7 @@ def do_run(prompt):
               )
           
           for j, sample in enumerate(samples):    
-              OUTPUT_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + "_" + str(random.randint(1000, 9999)) + ".png"
+              OUTPUT_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + "_" + str(random.randint(1000, 9999)) 
               cur_t -= 1
               intermediateStep = False
               if args.steps_per_checkpoint is not None:
@@ -1131,7 +1126,8 @@ def do_run(prompt):
                       if j % args.display_rate == 0 or cur_t == -1:
 
 						# set filename to timestamp plus random number to avoid overwriting
-                        image.save(os.path.join('outputs', OUTPUT_FILENAME + ".png"))
+                        print("saving img")
+                        image.save('./outputs', OUTPUT_FILENAME + ".png")
                         #display.clear_output(wait=True)
                         #display.display(display.Image('progress.png'))
                         #display histogram csa
@@ -2389,3 +2385,8 @@ def initModel():
             param.requires_grad_()
     if model_config['use_fp16']:
         model.convert_to_fp16()
+
+if __name__ == '__main__':
+    initModel()
+    res = do_run("unicorn magician")
+    print("res:", res)
