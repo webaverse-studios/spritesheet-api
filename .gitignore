@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+AdaBins/
+CLIP/
+models/dpt_large-midas-2f21e586.pt
+models/spritesheetdiffusion.pt
+pretrained/AdaBins_nyu.pt
+pytorch3d-lite/
+disco-diffusion/
+guided-diffusion/
+MiDaS/
+ResizeRight/
