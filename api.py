@@ -819,7 +819,7 @@ def do_run(_prompt):
             if turbo_mode and frame_num > turbo_preroll:
               shutil.copyfile(img_filepath, 'oldFrameScaled.png')
           else:
-            img_filepath = '/content/prevFrame.png' if is_colab else 'prevFrame.png'
+            img_filepath = 'prevFrame.png'
 
           next_step_pil = do_3d_step(img_filepath, frame_num, midas_model, midas_transform)
           next_step_pil.save('prevFrameScaled.png')
@@ -1123,45 +1123,6 @@ def do_run(_prompt):
                           #default clamping behavior
                           #clamp values to between 0 and 1
                           image = TF.to_pil_image(image.add(1).div(2).clamp(0, 1))
-                      if j % args.display_rate == 0 or cur_t == -1:
-
-						# set filename to timestamp plus random number to avoid overwriting
-                        print("saving img")
-                        image.save('./outputs', OUTPUT_FILENAME + ".png")
-                        #display.clear_output(wait=True)
-                        #display.display(display.Image('progress.png'))
-                        #display histogram csa
-                        if args.display_histogram:
-                          hist_img=cv2.imread("progress.png")
-                          chans = cv2.split(hist_img)
-                          colors = ("b", "g", "r")
-                          plt.figure()
-                          #plt.title(f"B/G/R at {percent}%")
-                          plt.xlabel(f"{percent}% complete")
-                          plt.ylabel("% of Pixels")
-                          plt.gca().spines['right'].set_visible(False)
-                          plt.gca().spines['left'].set_visible(False)
-                          plt.gca().spines['bottom'].set_visible(False)
-                          plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2%}')) # 2 decimal places
-                          # loop over the image channels
-                          for (chan, color) in zip(chans, colors):
-                            # create a histogram for the current channel and plot it
-                            hist = cv2.calcHist([chan], [0], None, [256], [0, 256])
-                            hist /= hist.sum()
-                            plt.plot(hist, color=color)
-                            plt.xlim([0, 256])                      
-                      if args.steps_per_checkpoint is not None:
-                        if j % args.steps_per_checkpoint == 0 and j > 0:
-                          if args.intermediates_in_subfolder is True:
-                            image.save(f'{partialFolder}/{filename}')
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
-                      else:
-                        if j in args.intermediate_saves:
-                          if args.intermediates_in_subfolder is True:
-                            image.save(f'{partialFolder}/{filename}')
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
                       if cur_t == -1:
                         if frame_num == 0:
                           save_settings()
@@ -1186,8 +1147,6 @@ def do_run(_prompt):
                         # if frame_num != args.max_frames-1:
                         #   display.clear_output()
               if cur_t < -1 : break # this is mainly used to account for skip_end_steps
-
-          plt.plot(np.array(loss_values), 'r')
 
 def generate_eye_views(trans_scale,batchFolder,filename,frame_num,midas_model, midas_transform):
    for i in range(2):
@@ -2197,8 +2156,8 @@ image_prompts = {
 
 #@title Do the Run!
 #@markdown `n_batches` ignored with animation modes.
-display_rate =  10 #@param{type: 'number'}
-n_batches =   9#@param{type: 'number'}
+display_rate = 10 #@param{type: 'number'}
+n_batches =   1#@param{type: 'number'}
 display_histogram = False#@param{type: 'boolean'}
 
 #Update Model Settings
@@ -2388,5 +2347,5 @@ def initModel():
 
 if __name__ == '__main__':
     initModel()
-    res = do_run("unicorn magician")
+    res = do_run("unicorn magician spritesheet")
     print("res:", res)
