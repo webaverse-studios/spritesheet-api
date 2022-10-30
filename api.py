@@ -749,8 +749,160 @@ def add_noise(img,noise_mix,noise_injector_px_size,
         x = torch.concat((x[:, :, :h//2, :], torch.flip(x[:, :, :h//2, :], [-2])), -2)
         print("vertical symmetry applied")
 
+def makeArgs(batchNum, seed, display_rate, n_batches, batch_size, start_frame,calc_frames_skip_steps , skip_step_ratio, display_histogram):
+  args = {
+    'batchNum': batchNum,
+    'prompts_series':split_prompts(text_prompts) if text_prompts else None,
+    'image_prompts_series':split_prompts(image_prompts) if image_prompts else None,
+    'seed': seed,
+    'display_rate':display_rate,
+    'n_batches':n_batches if animation_mode == 'None' else 1,
+    'batch_size':batch_size,
+    'batch_name': batch_name,
+    'steps': steps,
+    'diffusion_sampling_mode': diffusion_sampling_mode,
+    'width_height': width_height,
+    'clip_guidance_scale': clip_guidance_scale,
+    'tv_scale': tv_scale,
+    'range_scale': range_scale,
+    'sat_scale': sat_scale,
+    'sat_scale_buffer': sat_scale_buffer,
+    'cutn_batches': cutn_batches,
+    'soft_limiter_on': soft_limiter_on,
+    'soft_limiter_knee': soft_limiter_knee,
+    'init_image': None,
+    'init_scale': init_scale,
+    'skip_steps': skip_steps,
+    'skip_end_steps': skip_end_steps,
+    'side_x': side_x,
+    'side_y': side_y,
+    'timestep_respacing': timestep_respacing,
+    'diffusion_steps': diffusion_steps,
+    'animation_mode': animation_mode,
+    'video_init_path': video_init_path,
+    'extract_nth_frame': extract_nth_frame,
+    'video_init_seed_continuity': video_init_seed_continuity,
+    'key_frames': key_frames,
+    'max_frames': max_frames if animation_mode != "None" else 1,
+    'interp_spline': interp_spline,
+    'start_frame': start_frame,
+    'angle': angle,
+    'zoom': zoom,
+    'translation_x': translation_x,
+    'translation_y': translation_y,
+    'translation_z': translation_z,
+    'rotation_3d_x': rotation_3d_x,
+    'rotation_3d_y': rotation_3d_y,
+    'rotation_3d_z': rotation_3d_z,
+    'midas_depth_model': midas_depth_model,
+    'midas_weight': midas_weight,
+    'near_plane': near_plane,
+    'far_plane': far_plane,
+    'fov': fov,
+    'padding_mode': padding_mode,
+    'sampling_mode': sampling_mode,
+    'angle_series':angle_series,
+    'zoom_series':zoom_series,
+    'translation_x_series':translation_x_series,
+    'translation_y_series':translation_y_series,
+    'translation_z_series':translation_z_series,
+    'rotation_3d_x_series':rotation_3d_x_series,
+    'rotation_3d_y_series':rotation_3d_y_series,
+    'rotation_3d_z_series':rotation_3d_z_series,
+    'frames_scale': frames_scale,
+    'calc_frames_skip_steps': calc_frames_skip_steps,
+    'skip_step_ratio': skip_step_ratio,
+    'frames_skip_end_steps': frames_skip_end_steps,
+    'text_prompts': text_prompts,
+    'image_prompts': image_prompts,
+    'cut_overview': eval(cut_overview),
+      'cut_innercut': eval(cut_innercut),
+      'cut_ic_pow': eval(cut_ic_pow),
+      'cut_icgray_p': eval(cut_icgray_p),
+      'intermediate_saves': intermediate_saves,
+      'intermediates_in_subfolder': intermediates_in_subfolder,
+      'steps_per_checkpoint': steps_per_checkpoint,
+      'perlin_init': perlin_init,
+      'perlin_mode': perlin_mode,
+      'set_seed': set_seed,
+      'eta': eta,
+      'clamp_grad': clamp_grad,
+      'clamp_max': clamp_max,
+      'skip_augs': skip_augs,
+      'randomize_class': randomize_class,
+      'clip_denoised': clip_denoised,
+      'fuzzy_prompt': fuzzy_prompt,
+      'rand_mag': rand_mag,
+      'use_vertical_symmetry': use_vertical_symmetry,
+      'use_horizontal_symmetry': use_horizontal_symmetry,
+      'transformation_percent': transformation_percent,
+      'display_histogram': display_histogram,
+      'noise_injector': noise_injector,
+      'noise_injector_threshold': noise_injector_threshold,
+      'noise_injector_mix': noise_injector_mix,
+      'noise_injector_px_size': noise_injector_px_size,
+      'noise_injector_spice': noise_injector_spice,
+      'noise_injector_mask_feather': noise_injector_mask_feather,
+      'noise_injector_sigma': noise_injector_sigma,
+      'copy_palette': copy_palette,
+      'copy_palette_image': copy_palette_image,
+  }
+
+  args = SimpleNamespace(**args)
+  return args
 
 def do_run(_prompt):
+  batchFolder = f'{outDirPath}/{batch_name + "_" + str(time.time())}'
+  createPath(batchFolder)
+  display_rate = 10 #@param{type: 'number'}
+  n_batches =   1#@param{type: 'number'}
+  display_histogram = False#@param{type: 'boolean'}
+
+  #Update Model Settings
+  timestep_respacing = f'ddim{steps}'
+  diffusion_steps = (1000//steps)*steps if steps < 1000 else steps
+  model_config.update({
+      'timestep_respacing': timestep_respacing,
+      'diffusion_steps': diffusion_steps,
+  })
+  
+  batch_size = 1 
+  
+  def move_files(start_num, end_num, old_folder, new_folder):
+      for i in range(start_num, end_num):
+          old_file = old_folder + f'/{batch_name}({batchNum})_{i:04}.png'
+          new_file = new_folder + f'/{batch_name}({batchNum})_{i:04}.png'
+          os.rename(old_file, new_file)
+
+  resume_run = False #@param{type: 'boolean'}
+  run_to_resume = 'latest' #@param{type: 'string'}
+  resume_from_frame = 'latest' #@param{type: 'string'}
+  retain_overwritten_frames = False #@param{type: 'boolean'}
+  if retain_overwritten_frames:
+      retainFolder = f'{batchFolder}/retained'
+      createPath(retainFolder)
+  
+  skip_step_ratio = int(frames_skip_steps.rstrip("%")) / 100
+  calc_frames_skip_steps = math.floor(steps * skip_step_ratio)
+  
+  
+  if steps <= calc_frames_skip_steps:
+    sys.exit("ERROR: You can't skip more steps than your total steps")
+  start_frame = 0
+  batchNum = len(glob(batchFolder+"/*.png"))
+  while os.path.isfile(f"{batchFolder}/{batch_name}({batchNum})_0.png"):
+      batchNum += 1
+
+  print(f'Starting Run: {batch_name}({batchNum}) at frame {start_frame}')
+
+  if set_seed == 'random_seed':
+      random.seed()
+      seed = random.randint(0, 2**32)
+      # print(f'Using seed: {seed}')
+  else:
+      seed = int(set_seed)
+
+  args = makeArgs(batchNum, seed, display_rate, n_batches, batch_size, start_frame,calc_frames_skip_steps , skip_step_ratio, display_histogram)
   seed = args.seed
   print(range(args.start_frame, args.max_frames))
 
@@ -805,6 +957,7 @@ def do_run(_prompt):
               borderMode=cv2.BORDER_WRAP
           )
 
+          print("saving image 4")
           cv2.imwrite('prevFrameScaled.png', img_0)
           init_image = 'prevFrameScaled.png'
           init_scale = args.frames_scale
@@ -822,15 +975,18 @@ def do_run(_prompt):
             img_filepath = 'prevFrame.png'
 
           next_step_pil = do_3d_step(img_filepath, frame_num, midas_model, midas_transform)
+          print("saving pil image 1")
           next_step_pil.save('prevFrameScaled.png')
 
           ### Turbo mode - skip some diffusions, use 3d morph for clarity and to save time
           if turbo_mode:
             if frame_num == turbo_preroll: #start tracking oldframe
+              print("saving pil image 1")
               next_step_pil.save('oldFrameScaled.png')#stash for later blending          
             elif frame_num > turbo_preroll:
               #set up 2 warped image sequences, old & new, to blend toward new diff image
               old_frame = do_3d_step('oldFrameScaled.png', frame_num, midas_model, midas_transform)
+              print("saving pil image 2")
               old_frame.save('oldFrameScaled.png')
               if frame_num % int(turbo_steps) != 0: 
                 print('turbo skip this frame: skipping clip diffusion steps')
@@ -840,7 +996,9 @@ def do_run(_prompt):
                 newWarpedImg = cv2.imread('prevFrameScaled.png')#this is already updated..
                 oldWarpedImg = cv2.imread('oldFrameScaled.png')
                 blendedImage = cv2.addWeighted(newWarpedImg, blend_factor, oldWarpedImg,1-blend_factor, 0.0)
+                print("saving image 1")
                 cv2.imwrite(f'{batchFolder}/{filename}',blendedImage)
+                print("saving pil image 3")
                 next_step_pil.save(f'{img_filepath}') # save it also as prev_frame to feed next iteration
                 if vr_mode:
                   generate_eye_views(TRANSLATION_SCALE,batchFolder,filename,frame_num,midas_model, midas_transform)
@@ -848,6 +1006,7 @@ def do_run(_prompt):
               else:
                 #if not a skip frame, will run diffusion and need to blend.
                 oldWarpedImg = cv2.imread('prevFrameScaled.png')
+                print("saving image 2")
                 cv2.imwrite(f'oldFrameScaled.png',oldWarpedImg)#swap in for blending later 
                 print('clip/diff this frame - generate clip diff image')
 
@@ -1107,12 +1266,15 @@ def do_run(_prompt):
                         if cur_t == -1 and args.intermediates_in_subfolder is True:
                           save_num = f'{frame_num:04}' if animation_mode != "None" else i
                           filename = f'{args.batch_name}({args.batchNum})_{save_num}.png'
+                          print("setting filename 1")
                         else:
                           #If we're working with percentages, append it
                           if args.steps_per_checkpoint is not None:
                             filename = f'{args.batch_name}({args.batchNum})_{i:04}-{percent:02}%.png'
+                            print("setting filename 2")
                           # Or else, iIf we're working with specific steps, append those
                           else:
+                            print("setting filename 3")
                             filename = f'{args.batch_name}({args.batchNum})_{i:04}-{j:03}.png'
                       #Optional Soft Limiter
                       if args.soft_limiter_on == True:
@@ -1122,31 +1284,17 @@ def do_run(_prompt):
                       else:
                           #default clamping behavior
                           #clamp values to between 0 and 1
+                          print("dada")
                           image = TF.to_pil_image(image.add(1).div(2).clamp(0, 1))
                       if cur_t == -1:
-                        if frame_num == 0:
-                          save_settings()
-                        if args.animation_mode != "None":
-                          image.save('prevFrame.png')
-                        image.save(f'{batchFolder}/{filename}')
-                        if args.animation_mode == "3D":
-                          # If turbo, save a blended image
-                          if turbo_mode and frame_num > 0:
-                            # Mix new image with prevFrameScaled
-                            blend_factor = (1)/int(turbo_steps)
-                            newFrame = cv2.imread('prevFrame.png') # This is already updated..
-                            prev_frame_warped = cv2.imread('prevFrameScaled.png')
-                            blendedImage = cv2.addWeighted(newFrame, blend_factor, prev_frame_warped, (1-blend_factor), 0.0)
-                            cv2.imwrite(f'{batchFolder}/{filename}',blendedImage)
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
-  
-                          if vr_mode:
-                            generate_eye_views(TRANSLATION_SCALE, batchFolder, filename, frame_num, midas_model, midas_transform)
-  
-                        # if frame_num != args.max_frames-1:
-                        #   display.clear_output()
-              if cur_t < -1 : break # this is mainly used to account for skip_end_steps
+                        #if frame_num == 0:
+                        #  save_settings(seed=args.seed)
+                        print("saving pil image dd")
+                        image.save(f'{batchFolder}/{filename}')  
+              if cur_t < -1 : 
+                print("breaking, due to cur_t")
+                break # this is mainly used to account for skip_end_steps
+  return batchFolder, batch_name, batchNum
 
 def generate_eye_views(trans_scale,batchFolder,filename,frame_num,midas_model, midas_transform):
    for i in range(2):
@@ -1161,96 +1309,8 @@ def generate_eye_views(trans_scale,batchFolder,filename,frame_num,midas_model, m
                                                       args.fov, padding_mode=args.padding_mode,
                                                       sampling_mode=args.sampling_mode, midas_weight=args.midas_weight,spherical=True)
       eye_file_path = batchFolder+f"/frame_{frame_num:04}" + ('_l' if i==0 else '_r')+'.png'
+      print("saving pil image 6")
       transformed_image.save(eye_file_path)
-
-def save_settings():
-  setting_list = {
-    'text_prompts': text_prompts,
-    'image_prompts': image_prompts,
-    'clip_guidance_scale': clip_guidance_scale,
-    'tv_scale': tv_scale,
-    'range_scale': range_scale,
-    'sat_scale': sat_scale,
-    'sat_scale_buffer': sat_scale_buffer,
-    # 'cutn': cutn,
-    'cutn_batches': cutn_batches,
-    'soft_limiter_on': soft_limiter_on,
-    'soft_limiter_knee': soft_limiter_knee,
-    'init_image': init_image,
-    'init_scale': init_scale,
-    'skip_steps': skip_steps,
-    'skip_end_steps': skip_end_steps,
-    # 'zoom_per_frame': zoom_per_frame,
-    'max_frames': max_frames,
-    'interp_spline': interp_spline,
-    # 'rotation_per_frame': rotation_per_frame,
-    'frames_scale': frames_scale,
-    'frames_skip_steps': frames_skip_steps,
-    'perlin_init': perlin_init,
-    'perlin_mode': perlin_mode,
-    'skip_augs': skip_augs,
-    'randomize_class': randomize_class,
-    'clip_denoised': clip_denoised,
-    'clamp_grad': clamp_grad,
-    'clamp_max': clamp_max,
-    'seed': seed,
-    'fuzzy_prompt': fuzzy_prompt,
-    'rand_mag': rand_mag,
-    'eta': eta,
-    'width': width_height[0],
-    'height': width_height[1],
-    'diffusion_model': diffusion_model,
-    'use_secondary_model': use_secondary_model,
-    'steps': steps,
-    'diffusion_steps': diffusion_steps,
-    'diffusion_sampling_mode': diffusion_sampling_mode,
-    'ViTB32': ViTB32,
-    'ViTB16': ViTB16,
-    'ViTL14': ViTL14,
-    'RN101': RN101,
-    'RN50': RN50,
-    'RN50x4': RN50x4,
-    'RN50x16': RN50x16,
-    'RN50x64': RN50x64,
-    'cut_overview': str(cut_overview),
-    'cut_innercut': str(cut_innercut),
-    'cut_ic_pow': str(cut_ic_pow),
-    'cut_icgray_p': str(cut_icgray_p),
-    'key_frames': key_frames,
-    'max_frames': max_frames,
-    'angle': angle,
-    'zoom': zoom,
-    'translation_x': translation_x,
-    'translation_y': translation_y,
-    'translation_z': translation_z,
-    'rotation_3d_x': rotation_3d_x,
-    'rotation_3d_y': rotation_3d_y,
-    'rotation_3d_z': rotation_3d_z,
-    'midas_depth_model': midas_depth_model,
-    'midas_weight': midas_weight,
-    'near_plane': near_plane,
-    'far_plane': far_plane,
-    'fov': fov,
-    'padding_mode': padding_mode,
-    'sampling_mode': sampling_mode,
-    'video_init_path':video_init_path,
-    'extract_nth_frame':extract_nth_frame,
-    'video_init_seed_continuity': video_init_seed_continuity,
-    'turbo_mode':turbo_mode,
-    'turbo_steps':turbo_steps,
-    'turbo_preroll':turbo_preroll,
-    'noise_injector': noise_injector,
-    'noise_injector_threshold': noise_injector_threshold,
-    'noise_injector_px_size': noise_injector_px_size,
-    'noise_injector_sigma': noise_injector_sigma,
-    'noise_injector_spice': noise_injector_spice,
-    'noise_injector_mask_feather': noise_injector_mask_feather,
-    'copy_palette': copy_palette,
-    'copy_palette_image': copy_palette_image,
-  }
-  # print('Settings:', setting_list)
-  with open(f"{batchFolder}/{batch_name}({batchNum})_settings.txt", "w+") as f:   #save settings
-    json.dump(setting_list, f, ensure_ascii=False, indent=4)
 
 #@title 1.6 Define the secondary diffusion model
 
@@ -1671,10 +1731,6 @@ model_config.update({
     'diffusion_steps': diffusion_steps,
 })
 
-#Make folder for batch
-batchFolder = f'{outDirPath}/{batch_name}'
-createPath(batchFolder)
-
 """### Animation Settings"""
 
 #@markdown ####**Animation Mode:**
@@ -2075,10 +2131,6 @@ if type(intermediate_saves) is not list:
 else:
     steps_per_checkpoint = None
 
-if intermediate_saves and intermediates_in_subfolder is True:
-    partialFolder = f'{batchFolder}/partials'
-    createPath(partialFolder)
-
 #@markdown ---
 
 #@markdown ####**Advanced Settings:**
@@ -2151,184 +2203,6 @@ text_prompts = {
 image_prompts = {
     # 0:['ImagePromptsWorkButArentVeryGood.png:2',],
 }
-
-"""# 4. Diffuse!"""
-
-#@title Do the Run!
-#@markdown `n_batches` ignored with animation modes.
-display_rate = 10 #@param{type: 'number'}
-n_batches =   1#@param{type: 'number'}
-display_histogram = False#@param{type: 'boolean'}
-
-#Update Model Settings
-timestep_respacing = f'ddim{steps}'
-diffusion_steps = (1000//steps)*steps if steps < 1000 else steps
-model_config.update({
-    'timestep_respacing': timestep_respacing,
-    'diffusion_steps': diffusion_steps,
-})
-
-batch_size = 1 
-
-def move_files(start_num, end_num, old_folder, new_folder):
-    for i in range(start_num, end_num):
-        old_file = old_folder + f'/{batch_name}({batchNum})_{i:04}.png'
-        new_file = new_folder + f'/{batch_name}({batchNum})_{i:04}.png'
-        os.rename(old_file, new_file)
-
-#@markdown ---
-
-
-resume_run = False #@param{type: 'boolean'}
-run_to_resume = 'latest' #@param{type: 'string'}
-resume_from_frame = 'latest' #@param{type: 'string'}
-retain_overwritten_frames = False #@param{type: 'boolean'}
-if retain_overwritten_frames:
-    retainFolder = f'{batchFolder}/retained'
-    createPath(retainFolder)
-
-skip_step_ratio = int(frames_skip_steps.rstrip("%")) / 100
-calc_frames_skip_steps = math.floor(steps * skip_step_ratio)
-
-
-if steps <= calc_frames_skip_steps:
-  sys.exit("ERROR: You can't skip more steps than your total steps")
-
-if resume_run:
-    if run_to_resume == 'latest':
-        try:
-            batchNum
-        except:
-            batchNum = len(glob(f"{batchFolder}/{batch_name}(*)_settings.txt"))-1
-    else:
-        batchNum = int(run_to_resume)
-    if resume_from_frame == 'latest':
-        start_frame = len(glob(batchFolder+f"/{batch_name}({batchNum})_*.png"))
-        if animation_mode != '3D' and turbo_mode == True and start_frame > turbo_preroll and start_frame % int(turbo_steps) != 0:
-            start_frame = start_frame - (start_frame % int(turbo_steps))
-    else:
-        start_frame = int(resume_from_frame)+1
-        if animation_mode != '3D' and turbo_mode == True and start_frame > turbo_preroll and start_frame % int(turbo_steps) != 0:
-            start_frame = start_frame - (start_frame % int(turbo_steps))
-        if retain_overwritten_frames is True:
-            existing_frames = len(glob(batchFolder+f"/{batch_name}({batchNum})_*.png"))
-            frames_to_save = existing_frames - start_frame
-            print(f'Moving {frames_to_save} frames to the Retained folder')
-            move_files(start_frame, existing_frames, batchFolder, retainFolder)
-else:
-    start_frame = 0
-    batchNum = len(glob(batchFolder+"/*.txt"))
-    while os.path.isfile(f"{batchFolder}/{batch_name}({batchNum})_settings.txt") or os.path.isfile(f"{batchFolder}/{batch_name}-{batchNum}_settings.txt"):
-        batchNum += 1
-
-print(f'Starting Run: {batch_name}({batchNum}) at frame {start_frame}')
-
-if set_seed == 'random_seed':
-    random.seed()
-    seed = random.randint(0, 2**32)
-    # print(f'Using seed: {seed}')
-else:
-    seed = int(set_seed)
-
-args = {
-    'batchNum': batchNum,
-    'prompts_series':split_prompts(text_prompts) if text_prompts else None,
-    'image_prompts_series':split_prompts(image_prompts) if image_prompts else None,
-    'seed': seed,
-    'display_rate':display_rate,
-    'n_batches':n_batches if animation_mode == 'None' else 1,
-    'batch_size':batch_size,
-    'batch_name': batch_name,
-    'steps': steps,
-    'diffusion_sampling_mode': diffusion_sampling_mode,
-    'width_height': width_height,
-    'clip_guidance_scale': clip_guidance_scale,
-    'tv_scale': tv_scale,
-    'range_scale': range_scale,
-    'sat_scale': sat_scale,
-    'sat_scale_buffer': sat_scale_buffer,
-    'cutn_batches': cutn_batches,
-    'soft_limiter_on': soft_limiter_on,
-    'soft_limiter_knee': soft_limiter_knee,
-    'init_image': init_image,
-    'init_scale': init_scale,
-    'skip_steps': skip_steps,
-    'skip_end_steps': skip_end_steps,
-    'side_x': side_x,
-    'side_y': side_y,
-    'timestep_respacing': timestep_respacing,
-    'diffusion_steps': diffusion_steps,
-    'animation_mode': animation_mode,
-    'video_init_path': video_init_path,
-    'extract_nth_frame': extract_nth_frame,
-    'video_init_seed_continuity': video_init_seed_continuity,
-    'key_frames': key_frames,
-    'max_frames': max_frames if animation_mode != "None" else 1,
-    'interp_spline': interp_spline,
-    'start_frame': start_frame,
-    'angle': angle,
-    'zoom': zoom,
-    'translation_x': translation_x,
-    'translation_y': translation_y,
-    'translation_z': translation_z,
-    'rotation_3d_x': rotation_3d_x,
-    'rotation_3d_y': rotation_3d_y,
-    'rotation_3d_z': rotation_3d_z,
-    'midas_depth_model': midas_depth_model,
-    'midas_weight': midas_weight,
-    'near_plane': near_plane,
-    'far_plane': far_plane,
-    'fov': fov,
-    'padding_mode': padding_mode,
-    'sampling_mode': sampling_mode,
-    'angle_series':angle_series,
-    'zoom_series':zoom_series,
-    'translation_x_series':translation_x_series,
-    'translation_y_series':translation_y_series,
-    'translation_z_series':translation_z_series,
-    'rotation_3d_x_series':rotation_3d_x_series,
-    'rotation_3d_y_series':rotation_3d_y_series,
-    'rotation_3d_z_series':rotation_3d_z_series,
-    'frames_scale': frames_scale,
-    'calc_frames_skip_steps': calc_frames_skip_steps,
-    'skip_step_ratio': skip_step_ratio,
-    'frames_skip_end_steps': frames_skip_end_steps,
-    'text_prompts': text_prompts,
-    'image_prompts': image_prompts,
-    'cut_overview': eval(cut_overview),
-    'cut_innercut': eval(cut_innercut),
-    'cut_ic_pow': eval(cut_ic_pow),
-    'cut_icgray_p': eval(cut_icgray_p),
-    'intermediate_saves': intermediate_saves,
-    'intermediates_in_subfolder': intermediates_in_subfolder,
-    'steps_per_checkpoint': steps_per_checkpoint,
-    'perlin_init': perlin_init,
-    'perlin_mode': perlin_mode,
-    'set_seed': set_seed,
-    'eta': eta,
-    'clamp_grad': clamp_grad,
-    'clamp_max': clamp_max,
-    'skip_augs': skip_augs,
-    'randomize_class': randomize_class,
-    'clip_denoised': clip_denoised,
-    'fuzzy_prompt': fuzzy_prompt,
-    'rand_mag': rand_mag,
-    'use_vertical_symmetry': use_vertical_symmetry,
-    'use_horizontal_symmetry': use_horizontal_symmetry,
-    'transformation_percent': transformation_percent,
-    'display_histogram': display_histogram,
-    'noise_injector': noise_injector,
-    'noise_injector_threshold': noise_injector_threshold,
-    'noise_injector_mix': noise_injector_mix,
-    'noise_injector_px_size': noise_injector_px_size,
-    'noise_injector_spice': noise_injector_spice,
-    'noise_injector_mask_feather': noise_injector_mask_feather,
-    'noise_injector_sigma': noise_injector_sigma,
-    'copy_palette': copy_palette,
-    'copy_palette_image': copy_palette_image,
-}
-
-args = SimpleNamespace(**args)
 
 model = None
 diffusion = None
