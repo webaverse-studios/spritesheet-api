@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from api import initModel, do_run
 from pymatting import cutout
 import PIL
+from crop import crop
 
 app = FastAPI()
 
@@ -18,6 +19,7 @@ async def root(s: str):
         res = do_run(s)
         print(res)
         filename = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_0.png"
+        preCutFileName = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_pre_cut_0.png"
         cutFileName = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_cut_0.png"
 
         img = PIL.Image.open(filename)
@@ -26,7 +28,7 @@ async def root(s: str):
             isBlack = True
         else:
             isBlack = False
-            
+         
             img = img.convert('RGBA')
 
             width, height = img.size
@@ -43,7 +45,10 @@ async def root(s: str):
                     if abs(pixel[0] - most_frequent_pixel[1][0]) < 10 and abs(pixel[1] - most_frequent_pixel[1][1]) < 10 and abs(pixel[2] - most_frequent_pixel[1][2]) < 10:
                         img.putpixel((x, y), (255, 255, 255, 0))
             
-            img.save(cutFileName)
+            img = crop(img)   
+            img.save(preCutFileName)
+            
+            cutout(preCutFileName, "./mask.png", cutFileName)
 
     return FileResponse(cutFileName)
 
