@@ -54,7 +54,3 @@ def postprocessImg(img1: Image):
 
         return img1
     return img1
-
-img1 = Image.open("2.png").convert("RGBA")
-img1 =  postprocessImg(img1)
-img1.save("1_post.png")

@@ -4,6 +4,7 @@ from api import initModel, do_run
 from pymatting import cutout
 import PIL
 from crop import crop
+from post_process import postprocessImg
 
 app = FastAPI()
 
@@ -28,7 +29,8 @@ async def root(s: str):
             isBlack = True
         else:
             isBlack = False
-         
+
+            img = postprocessImg(img)
             img = img.convert('RGBA')
 
             width, height = img.size
