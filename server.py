@@ -5,6 +5,7 @@ from pymatting import cutout
 import PIL
 from crop import crop
 from post_process import postprocessImg
+from cleaner import cleanImage
 
 app = FastAPI()
 
@@ -48,11 +49,20 @@ async def root(s: str):
                         img.putpixel((x, y), (255, 255, 255, 0))
             
             img = crop(img)   
-            img.save(preCutFileName)
-            
-            cutout(preCutFileName, "./mask.png", cutFileName)
+            img = cleanImage(img)
 
-    return FileResponse(cutFileName)
+            #check if the image is mostly empty
+            extrema = img.convert("L").getextrema()
+            if extrema == (0, 0):
+                isBlack = True
+            else:
+                img.save(preCutFileName)
+                isBlack = False
+
+            
+            #cutout(preCutFileName, "./mask.png", cutFileName)
+
+    return FileResponse(preCutFileName)
 
 
 if __name__ == "__main__":
