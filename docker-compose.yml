@@ -1,0 +1,4 @@
+version: '3'
+services:
+  zeref:
+    image: zerefdragoneel/spritesheet-api:v1
