@@ -9,12 +9,14 @@ RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 # RUN conda run --no-capture-output -n py38 python api.py
 RUN echo $LD_LIBRARY_PATH
 RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-gnu/lib &&  conda run --no-capture-output -n py38 python -m pip install -r requirements.txt
+RUN cp /opt/conda/envs/py38/lib/libstdc++.so.6.0.29 /usr/lib/x86_64-linux-gnu/libstdc++.so.6
 EXPOSE 7777
-CMD  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-gnu/lib && conda run --no-capture-output -n py38 python async_server.py 
-
+ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
+CMD  ["conda run --no-capture-output -n py38 python async_server.py"]
 
 
 # FROM zerefdragoneel/spritesheet-api:latest
 # WORKDIR /app
+# RUN cp /opt/conda/envs/py38/lib/libstdc++.so.6.0.29 /usr/lib/x86_64-linux-gnu/libstdc++.so.6
 # ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
-# CMD  ["export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-gnu/lib && conda run --no-capture-output -n py38 python async_server.py"]
+# CMD  ["conda run --no-capture-output -n py38 python async_server.py"]
