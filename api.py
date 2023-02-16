@@ -82,7 +82,7 @@ USE_ADABINS = True
 root_path = os.getcwd()
 model_path = f'{root_path}/models'
 
-multipip_res = subprocess.run(['pip', 'install', 'lpips', 'datetime', 'timm', 'ftfy', 'einops', 'pytorch-lightning', 'omegaconf'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+multipip_res = subprocess.run(['pip', 'install', 'lpips', 'datetime', 'timm', 'ftfy', 'einops', 'pytorch-lightning', 'omegaconf', 'cv2'], stdout=subprocess.PIPE).stdout.decode('utf-8')
 print(multipip_res)
 
 try:

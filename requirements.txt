@@ -1,0 +1,10 @@
+
+fastai==2.7.10
+fastapi==0.89.1
+fastcore==1.5.27
+fastdownload==0.0.7
+fastdtw==0.3.4
+fastjsonschema==2.16.2
+fastprogress==1.0.3
+fastrlock==0.8.1
+uvicorn==0.20.0

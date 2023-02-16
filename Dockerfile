@@ -19,4 +19,4 @@ CMD  ["conda run --no-capture-output -n py38 python async_server.py"]
 # WORKDIR /app
 # RUN cp /opt/conda/envs/py38/lib/libstdc++.so.6.0.29 /usr/lib/x86_64-linux-gnu/libstdc++.so.6
 # ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
-# CMD  ["conda run --no-capture-output -n py38 python async_server.py"]
+# CMD  ["conda run --no-capture-output -n py38 python server.py"]
