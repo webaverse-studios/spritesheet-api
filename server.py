@@ -23,6 +23,7 @@ async def root(s: str):
     while isBlack == True:
         res = do_run(s)
         print(res)
+        path = res[0] + "/"
         filename = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_0.png"
         b64Output = ""
 
@@ -64,8 +65,11 @@ async def root(s: str):
             
             #cutout(preCutFileName, "./mask.png", cutFileName)
 
+
     if os.path.exists(filename):
         os.remove(filename)
+    if os.path.exists(path):
+        os.remove(path)
 
     return { "data": b64Output }
 
