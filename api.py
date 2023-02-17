@@ -14,7 +14,7 @@ else:
 
 nvidiasmi_output = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
 cards_requiring_downgrade = ["Tesla T4", "V100"]
-if any(cardstr in nvidiasmi_output for cardstr in cards_requiring_downgrade) and not ignore_bad_gpu_error:    
+if any(cardstr in nvidiasmi_output for cardstr in cards_requiring_downgrade) and not ignore_bad_gpu_error:
     print("<h2 style='color: orange'>Colab gave you a GPU that can't handle default settings</h2>")
     print("<h4>To avoid issues, either select fewer models or go to Runtime > Disconnect and delete runtime and run this cell again. You can keep doing this until you don't see this message (meaning you got a good GPU)</h4>")
     print("<h4>If you want to proceed anyway, check `ignore_bad_gpu_error` and run all cells</h4>")
@@ -43,7 +43,7 @@ try:
     from google.colab import drive
     print("Google Colab detected. Using Google Drive.")
     google_drive = False
-    save_models_to_google_drive = False 
+    save_models_to_google_drive = False
 except:
     google_drive = False
     save_models_to_google_drive = False
@@ -295,10 +295,10 @@ def init_midas_depth_model(midas_model_type="dpt_large", optimize=True):
     )
 
     midas_model.eval()
-    
+
     if optimize==True:
         if DEVICE == torch.device("cuda"):
-            midas_model = midas_model.to(memory_format=torch.channels_last)  
+            midas_model = midas_model.to(memory_format=torch.channels_last)
             midas_model = midas_model.half()
 
     midas_model.to(DEVICE)
@@ -477,7 +477,7 @@ padargs = {}
 
 class MakeCutoutsDango(nn.Module):
     def __init__(self, cut_size,
-                 Overview=4, 
+                 Overview=4,
                  InnerCrop = 0, IC_Size_Pow=0.5, IC_Grey_P = 0.2
                  ):
         super().__init__()
@@ -486,7 +486,7 @@ class MakeCutoutsDango(nn.Module):
         self.InnerCrop = InnerCrop
         self.IC_Size_Pow = IC_Size_Pow
         self.IC_Grey_P = IC_Grey_P
-          
+
 
     def forward(self, input):
         cutouts = []
@@ -495,7 +495,7 @@ class MakeCutoutsDango(nn.Module):
         max_size = min(sideX, sideY)
         min_size = min(sideX, sideY, self.cut_size)
         l_size = max(sideX, sideY)
-        output_shape = [1,3,self.cut_size,self.cut_size] 
+        output_shape = [1,3,self.cut_size,self.cut_size]
         output_shape_2 = [1,3,self.cut_size+2,self.cut_size+2]
         pad_input = F.pad(input,((sideY-max_size)//2,(sideY-max_size)//2,(sideX-max_size)//2,(sideX-max_size)//2), **padargs)
         cutout = resize(pad_input, out_shape=output_shape)
@@ -518,7 +518,7 @@ class MakeCutoutsDango(nn.Module):
             if cutout_debug:
                 TF.to_pil_image(cutouts[0].clamp(0, 1).squeeze(0)).save("cutout_overview0.jpg",quality=99)
 
-                              
+
         if self.InnerCrop >0:
             for i in range(self.InnerCrop):
                 size = int(torch.rand([])**self.IC_Size_Pow * (max_size - min_size) + min_size)
@@ -536,7 +536,7 @@ class MakeCutoutsDango(nn.Module):
 def spherical_dist_loss(x, y):
     x = F.normalize(x, dim=-1)
     y = F.normalize(y, dim=-1)
-    return (x - y).norm(dim=-1).div(2).arcsin().pow(2).mul(2)     
+    return (x - y).norm(dim=-1).div(2).arcsin().pow(2).mul(2)
 
 def tv_loss(input):
     """L2 total variation loss, as in Mahendran et al."""
@@ -595,7 +595,7 @@ def soft_limit(x):
 
 def center_crop(img,crop_pct):
   #zippy color kit
-  dimensions = img.shape 
+  dimensions = img.shape
   # height, width, number of channels in image
   height = img.shape[0]
   width = img.shape[1]
@@ -610,8 +610,8 @@ def center_crop(img,crop_pct):
 def get_edge_img(img):
   #zippy color kit
   canny_min = .66*img.mean()
-  canny_max = 1.33*img.mean()  
-  get_edge_img = cv2.Canny(img,canny_min,canny_max,True) 
+  canny_max = 1.33*img.mean()
+  get_edge_img = cv2.Canny(img,canny_min,canny_max,True)
   return get_edge_img
 
 def get_edge_mix(img):
@@ -635,7 +635,7 @@ def calc_brightness(img):
 
 def contrast_stretch(img):
   #zippy color kit
-  #requires a cv2 Image (val 0-1) 
+  #requires a cv2 Image (val 0-1)
   #also https://stackoverflow.com/questions/64484423/cv2-lut-throws-an-error-when-performing-gamma-correction-assertion-failed
   xp = [0, 64, 128, 192, 255]
   fp = [0, 16, 128, 240, 255]
@@ -677,7 +677,7 @@ def add_noise(img,noise_mix,noise_injector_px_size,
   edge_img_dilation2 = cv2.dilate(edge_img, kernel2, iterations=3)
   blended_dilation = (edge_img_dilation/2 + edge_img_dilation2/2)
   blur_size = noise_injector_mask_feather*2+1
-  
+
   blur_kernel = (blur_size,blur_size)
   #3 blurs, just for grins
   edge_blurred_img = cv2.GaussianBlur(blended_dilation, blur_kernel, 0)
@@ -694,7 +694,7 @@ def add_noise(img,noise_mix,noise_injector_px_size,
   sigma = noise_injector_sigma
   #sigma = 64 #larger numbers = bigger blobs
   #noise image is expecting dim_hw
-  gaussian = np.random.normal(mean, sigma, dim_hw) # dim must be (H,W) 
+  gaussian = np.random.normal(mean, sigma, dim_hw) # dim must be (H,W)
   gaus_blur_kernel = (15,15)
   blurred_gaussian = cv2.GaussianBlur(gaussian, gaus_blur_kernel, 0)
   gaussian_mask = blurred_gaussian.reshape(*blurred_gaussian.shape, 1)
@@ -706,21 +706,21 @@ def add_noise(img,noise_mix,noise_injector_px_size,
   noise_img =  np.random.normal(loc=0, scale=1, size=img.shape)
   noise_img *= 255
   #change pixel density...
-  noise_px_size = noise_injector_px_size  
+  noise_px_size = noise_injector_px_size
   noise_img = center_crop(noise_img,1/noise_px_size)
   #modify noise color mix to original img
   colored_noise = exposure.match_histograms(noise_img, img, multichannel=True)
-  #blend in 'spice' 
-  colored_noise = noise_img * noise_injector_spice + colored_noise * (1-noise_injector_spice)  
-  
+  #blend in 'spice'
+  colored_noise = noise_img * noise_injector_spice + colored_noise * (1-noise_injector_spice)
+
   #resize to orig.. using dim from above
   #cv2.resize is expecting dim_wh
-  colored_noise = cv2.resize(colored_noise, dim_wh, interpolation = cv2.INTER_AREA) 
+  colored_noise = cv2.resize(colored_noise, dim_wh, interpolation = cv2.INTER_AREA)
   noise_blur_size = noise_px_size * 2 + 1
-  noise_blur_kernel = (noise_blur_size,noise_blur_size)    
+  noise_blur_kernel = (noise_blur_size,noise_blur_size)
   colored_noise = cv2.GaussianBlur(colored_noise, noise_blur_kernel, 0)
-  colored_noise = cv2.GaussianBlur(colored_noise, noise_blur_kernel, 0) 
-  
+  colored_noise = cv2.GaussianBlur(colored_noise, noise_blur_kernel, 0)
+
   masked_noise = colored_noise * combo_mask
   scaled_mask = combo_mask * noise_mix
   #blend in noise using mask
@@ -749,8 +749,158 @@ def add_noise(img,noise_mix,noise_injector_px_size,
         x = torch.concat((x[:, :, :h//2, :], torch.flip(x[:, :, :h//2, :], [-2])), -2)
         print("vertical symmetry applied")
 
+def makeArgs(batchNum, seed, display_rate, n_batches, batch_size, start_frame,calc_frames_skip_steps , skip_step_ratio, display_histogram):
+  args = {
+    'batchNum': batchNum,
+    'prompts_series':split_prompts(text_prompts) if text_prompts else None,
+    'image_prompts_series':split_prompts(image_prompts) if image_prompts else None,
+    'seed': seed,
+    'display_rate':display_rate,
+    'n_batches':n_batches if animation_mode == 'None' else 1,
+    'batch_size':batch_size,
+    'batch_name': batch_name,
+    'steps': steps,
+    'diffusion_sampling_mode': diffusion_sampling_mode,
+    'width_height': width_height,
+    'clip_guidance_scale': clip_guidance_scale,
+    'tv_scale': tv_scale,
+    'range_scale': range_scale,
+    'sat_scale': sat_scale,
+    'sat_scale_buffer': sat_scale_buffer,
+    'cutn_batches': cutn_batches,
+    'soft_limiter_on': soft_limiter_on,
+    'soft_limiter_knee': soft_limiter_knee,
+    'init_image': None,
+    'init_scale': init_scale,
+    'skip_steps': skip_steps,
+    'skip_end_steps': skip_end_steps,
+    'side_x': side_x,
+    'side_y': side_y,
+    'timestep_respacing': timestep_respacing,
+    'diffusion_steps': diffusion_steps,
+    'animation_mode': animation_mode,
+    'video_init_path': video_init_path,
+    'extract_nth_frame': extract_nth_frame,
+    'video_init_seed_continuity': video_init_seed_continuity,
+    'key_frames': key_frames,
+    'max_frames': max_frames if animation_mode != "None" else 1,
+    'interp_spline': interp_spline,
+    'start_frame': start_frame,
+    'angle': angle,
+    'zoom': zoom,
+    'translation_x': translation_x,
+    'translation_y': translation_y,
+    'translation_z': translation_z,
+    'rotation_3d_x': rotation_3d_x,
+    'rotation_3d_y': rotation_3d_y,
+    'rotation_3d_z': rotation_3d_z,
+    'midas_depth_model': midas_depth_model,
+    'midas_weight': midas_weight,
+    'near_plane': near_plane,
+    'far_plane': far_plane,
+    'fov': fov,
+    'padding_mode': padding_mode,
+    'sampling_mode': sampling_mode,
+    'angle_series':angle_series,
+    'zoom_series':zoom_series,
+    'translation_x_series':translation_x_series,
+    'translation_y_series':translation_y_series,
+    'translation_z_series':translation_z_series,
+    'rotation_3d_x_series':rotation_3d_x_series,
+    'rotation_3d_y_series':rotation_3d_y_series,
+    'rotation_3d_z_series':rotation_3d_z_series,
+    'frames_scale': frames_scale,
+    'calc_frames_skip_steps': calc_frames_skip_steps,
+    'skip_step_ratio': skip_step_ratio,
+    'frames_skip_end_steps': frames_skip_end_steps,
+    'text_prompts': text_prompts,
+    'image_prompts': image_prompts,
+    'cut_overview': eval(cut_overview),
+      'cut_innercut': eval(cut_innercut),
+      'cut_ic_pow': eval(cut_ic_pow),
+      'cut_icgray_p': eval(cut_icgray_p),
+      'intermediate_saves': intermediate_saves,
+      'intermediates_in_subfolder': intermediates_in_subfolder,
+      'steps_per_checkpoint': steps_per_checkpoint,
+      'perlin_init': perlin_init,
+      'perlin_mode': perlin_mode,
+      'set_seed': set_seed,
+      'eta': eta,
+      'clamp_grad': clamp_grad,
+      'clamp_max': clamp_max,
+      'skip_augs': skip_augs,
+      'randomize_class': randomize_class,
+      'clip_denoised': clip_denoised,
+      'fuzzy_prompt': fuzzy_prompt,
+      'rand_mag': rand_mag,
+      'use_vertical_symmetry': use_vertical_symmetry,
+      'use_horizontal_symmetry': use_horizontal_symmetry,
+      'transformation_percent': transformation_percent,
+      'display_histogram': display_histogram,
+      'noise_injector': noise_injector,
+      'noise_injector_threshold': noise_injector_threshold,
+      'noise_injector_mix': noise_injector_mix,
+      'noise_injector_px_size': noise_injector_px_size,
+      'noise_injector_spice': noise_injector_spice,
+      'noise_injector_mask_feather': noise_injector_mask_feather,
+      'noise_injector_sigma': noise_injector_sigma,
+      'copy_palette': copy_palette,
+      'copy_palette_image': copy_palette_image,
+  }
+
+  args = SimpleNamespace(**args)
+  return args
 
 def do_run(_prompt):
+  batchFolder = f'{outDirPath}/{batch_name + "_" + str(time.time())}'
+  createPath(batchFolder)
+  display_rate = 10 #@param{type: 'number'}
+  n_batches =   1#@param{type: 'number'}
+  display_histogram = False#@param{type: 'boolean'}
+
+  #Update Model Settings
+  timestep_respacing = f'ddim{steps}'
+  diffusion_steps = (1000//steps)*steps if steps < 1000 else steps
+  model_config.update({
+      'timestep_respacing': timestep_respacing,
+      'diffusion_steps': diffusion_steps,
+  })
+
+  batch_size = 1
+
+  def move_files(start_num, end_num, old_folder, new_folder):
+      for i in range(start_num, end_num):
+          old_file = old_folder + f'/{batch_name}({batchNum})_{i:04}.png'
+          new_file = new_folder + f'/{batch_name}({batchNum})_{i:04}.png'
+          os.rename(old_file, new_file)
+
+  resume_run = False #@param{type: 'boolean'}
+  run_to_resume = 'latest' #@param{type: 'string'}
+  resume_from_frame = 'latest' #@param{type: 'string'}
+  retain_overwritten_frames = False #@param{type: 'boolean'}
+  if retain_overwritten_frames:
+      retainFolder = f'{batchFolder}/retained'
+      createPath(retainFolder)
+
+  skip_step_ratio = int(frames_skip_steps.rstrip("%")) / 100
+  calc_frames_skip_steps = math.floor(steps * skip_step_ratio)
+
+
+  if steps <= calc_frames_skip_steps:
+    sys.exit("ERROR: You can't skip more steps than your total steps")
+  start_frame = 0
+  batchNum = 1
+
+  print(f'Starting Run: {batch_name}({batchNum}) at frame {start_frame}')
+
+  if set_seed == 'random_seed':
+      random.seed()
+      seed = random.randint(0, 2**32)
+      # print(f'Using seed: {seed}')
+  else:
+      seed = int(set_seed)
+
+  args = makeArgs(batchNum, seed, display_rate, n_batches, batch_size, start_frame,calc_frames_skip_steps , skip_step_ratio, display_histogram)
   seed = args.seed
   print(range(args.start_frame, args.max_frames))
 
@@ -782,7 +932,7 @@ def do_run(_prompt):
               f'translation_x: {translation_x}',
               f'translation_y: {translation_y}',
           )
-        
+
         if frame_num > 0:
           seed += 1
           if resume_run and frame_num == start_frame:
@@ -805,6 +955,7 @@ def do_run(_prompt):
               borderMode=cv2.BORDER_WRAP
           )
 
+          print("saving image 4")
           cv2.imwrite('prevFrameScaled.png', img_0)
           init_image = 'prevFrameScaled.png'
           init_scale = args.frames_scale
@@ -813,26 +964,29 @@ def do_run(_prompt):
 
       if args.animation_mode == "3D":
         if frame_num > 0:
-          seed += 1    
+          seed += 1
           if resume_run and frame_num == start_frame:
             img_filepath = batchFolder+f"/{batch_name}({batchNum})_{start_frame-1:04}.png"
             if turbo_mode and frame_num > turbo_preroll:
               shutil.copyfile(img_filepath, 'oldFrameScaled.png')
           else:
-            img_filepath = '/content/prevFrame.png' if is_colab else 'prevFrame.png'
+            img_filepath = 'prevFrame.png'
 
           next_step_pil = do_3d_step(img_filepath, frame_num, midas_model, midas_transform)
+          print("saving pil image 1")
           next_step_pil.save('prevFrameScaled.png')
 
           ### Turbo mode - skip some diffusions, use 3d morph for clarity and to save time
           if turbo_mode:
             if frame_num == turbo_preroll: #start tracking oldframe
-              next_step_pil.save('oldFrameScaled.png')#stash for later blending          
+              print("saving pil image 1")
+              next_step_pil.save('oldFrameScaled.png')#stash for later blending
             elif frame_num > turbo_preroll:
               #set up 2 warped image sequences, old & new, to blend toward new diff image
               old_frame = do_3d_step('oldFrameScaled.png', frame_num, midas_model, midas_transform)
+              print("saving pil image 2")
               old_frame.save('oldFrameScaled.png')
-              if frame_num % int(turbo_steps) != 0: 
+              if frame_num % int(turbo_steps) != 0:
                 print('turbo skip this frame: skipping clip diffusion steps')
                 filename = f'{args.batch_name}({args.batchNum})_{frame_num:04}.png'
                 blend_factor = ((frame_num % int(turbo_steps))+1)/int(turbo_steps)
@@ -840,7 +994,9 @@ def do_run(_prompt):
                 newWarpedImg = cv2.imread('prevFrameScaled.png')#this is already updated..
                 oldWarpedImg = cv2.imread('oldFrameScaled.png')
                 blendedImage = cv2.addWeighted(newWarpedImg, blend_factor, oldWarpedImg,1-blend_factor, 0.0)
+                print("saving image 1")
                 cv2.imwrite(f'{batchFolder}/{filename}',blendedImage)
+                print("saving pil image 3")
                 next_step_pil.save(f'{img_filepath}') # save it also as prev_frame to feed next iteration
                 if vr_mode:
                   generate_eye_views(TRANSLATION_SCALE,batchFolder,filename,frame_num,midas_model, midas_transform)
@@ -848,7 +1004,8 @@ def do_run(_prompt):
               else:
                 #if not a skip frame, will run diffusion and need to blend.
                 oldWarpedImg = cv2.imread('prevFrameScaled.png')
-                cv2.imwrite(f'oldFrameScaled.png',oldWarpedImg)#swap in for blending later 
+                print("saving image 2")
+                cv2.imwrite(f'oldFrameScaled.png',oldWarpedImg)#swap in for blending later
                 print('clip/diff this frame - generate clip diff image')
 
           init_image = 'prevFrameScaled.png'
@@ -865,18 +1022,18 @@ def do_run(_prompt):
         skip_end_steps = args.skip_end_steps
 
       loss_values = []
-  
+
       if seed is not None:
           np.random.seed(seed)
           random.seed(seed)
           torch.manual_seed(seed)
           torch.cuda.manual_seed_all(seed)
           torch.backends.cudnn.deterministic = True
-  
+
       target_embeds, weights = [], []
-      
+
       frame_prompt = [ _prompt ]
-      
+
       print(args.image_prompts_series)
       if args.image_prompts_series is not None and frame_num >= len(args.image_prompts_series):
         image_prompt = args.image_prompts_series[-1]
@@ -892,11 +1049,11 @@ def do_run(_prompt):
             cutn = 16
             model_stat = {"clip_model":None,"target_embeds":[],"make_cutouts":None,"weights":[]}
             model_stat["clip_model"] = clip_model
-            
+
             for prompt in frame_prompt:
                 txt, weight = parse_prompt(prompt)
                 txt = clip_model.encode_text(clip.tokenize(prompt).to(device)).float()
-                
+
                 if args.fuzzy_prompt:
                     for i in range(25):
                         model_stat["target_embeds"].append((txt + torch.randn(txt.shape).cuda() * args.rand_mag).clamp(0,1))
@@ -904,9 +1061,9 @@ def do_run(_prompt):
                 else:
                     model_stat["target_embeds"].append(txt)
                     model_stat["weights"].append(weight)
-        
+
             if image_prompt:
-              model_stat["make_cutouts"] = MakeCutouts(clip_model.visual.input_resolution, cutn, skip_augs=skip_augs) 
+              model_stat["make_cutouts"] = MakeCutouts(clip_model.visual.input_resolution, cutn, skip_augs=skip_augs)
               for prompt in image_prompt:
                   path, weight = parse_prompt(prompt)
                   img = Image.open(fetch(path)).convert('RGB')
@@ -920,14 +1077,14 @@ def do_run(_prompt):
                   else:
                       model_stat["target_embeds"].append(embed)
                       model_stat["weights"].extend([weight / cutn] * cutn)
-        
+
             model_stat["target_embeds"] = torch.cat(model_stat["target_embeds"])
             model_stat["weights"] = torch.tensor(model_stat["weights"], device=device)
             if model_stat["weights"].sum().abs() < 1e-3:
                 raise RuntimeError('The weights must not sum to 0.')
             model_stat["weights"] /= model_stat["weights"].sum().abs()
             model_stats.append(model_stat)
-  
+
       init = None
       if init_image is not None:
           init = Image.open(fetch(init_image)).convert('RGB')
@@ -936,29 +1093,29 @@ def do_run(_prompt):
             init_to_noise = cv2.imread(init_image)
             if args.copy_palette == True:
               palette_source_img = cv2.imread(args.copy_palette_image)
-              init_to_noise = exposure.match_histograms(init_to_noise, palette_source_img, multichannel=True) 
+              init_to_noise = exposure.match_histograms(init_to_noise, palette_source_img, multichannel=True)
             edge_mix = get_edge_mix(center_crop(init_to_noise,.33))
             print('edge mix is...',round(edge_mix,1))
             if edge_mix < args.noise_injector_threshold:
               init_to_noise = add_noise(init_to_noise,args.noise_injector_mix,args.noise_injector_px_size,
                                         args.noise_injector_spice,args.noise_injector_mask_feather,
-                                        args.noise_injector_sigma) 
+                                        args.noise_injector_sigma)
               print('edge mix was below threshold, noise was added')
-              #ratio = np.amax(init_to_noise) / 256       
+              #ratio = np.amax(init_to_noise) / 256
               #converted_noised_init = (init_to_noise / ratio).astype('uint8')
               #recolored_noised_init = cv2.cvtColor(converted_noised_init,cv2.COLOR_BGR2RGB)
               #init = Image.fromarray(recolored_noised_init)
             else:
               print('edge mix was above threshold, no noise was added')
             #now convert init_to_noise back to PIL img format
-            ratio = np.amax(init_to_noise) / 256       
+            ratio = np.amax(init_to_noise) / 256
             converted_noised_init = (init_to_noise / ratio).astype('uint8')
             recolored_noised_init = cv2.cvtColor(converted_noised_init,cv2.COLOR_BGR2RGB)
-            init = Image.fromarray(recolored_noised_init)         
+            init = Image.fromarray(recolored_noised_init)
           #end noise injector
           init = init.resize((args.side_x, args.side_y), Image.LANCZOS)
           init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
-      
+
       if args.perlin_init:
           if args.perlin_mode == 'color':
               init = create_perlin_noise([1.5**-i*0.5 for i in range(12)], 1, 1, False)
@@ -972,9 +1129,9 @@ def do_run(_prompt):
           # init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device)
           init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
           del init2
-  
+
       cur_t = None
-  
+
       def cond_fn(x, t, y=None):
           with torch.enable_grad():
               x_is_NaN = False
@@ -1004,9 +1161,9 @@ def do_run(_prompt):
                         input_resolution=224
 
                     cuts = MakeCutoutsDango(input_resolution,
-                            Overview= args.cut_overview[1000-t_int], 
-                            InnerCrop = args.cut_innercut[1000-t_int], 
-                            IC_Size_Pow=args.cut_ic_pow[1000-t_int], 
+                            Overview= args.cut_overview[1000-t_int],
+                            InnerCrop = args.cut_innercut[1000-t_int],
+                            IC_Size_Pow=args.cut_ic_pow[1000-t_int],
                             IC_Grey_P = args.cut_icgray_p[1000-t_int]
                             )
                     clip_in = normalize(cuts(x_in.add(1).div(2)))
@@ -1025,7 +1182,7 @@ def do_run(_prompt):
               #updated sat_losses function.. csa uses sat_scale_buffer
               sat_losses = torch.abs(x_in - x_in.clamp(min=-1+args.sat_scale_buffer,max=1-args.sat_scale_buffer)).mean()
               if sat_scale_buffer > 0:
-                sat_losses = (sat_losses/sat_scale_buffer)**2 # 
+                sat_losses = (sat_losses/sat_scale_buffer)**2 #
                 sat_losses = sat_losses.clamp(min=0,max=2)#limit to 2 max to avoid nonlinearity
               loss = tv_losses.sum() * tv_scale + range_losses.sum() * range_scale + sat_losses.sum() * sat_scale
               if init is not None and init_scale:
@@ -1040,9 +1197,9 @@ def do_run(_prompt):
                 grad = torch.zeros_like(x)
           if args.clamp_grad and x_is_NaN == False:
               magnitude = grad.square().mean().sqrt()
-              return grad * magnitude.clamp(max=args.clamp_max) / magnitude  #min=-0.02, min=-clamp_max, 
+              return grad * magnitude.clamp(max=args.clamp_max) / magnitude  #min=-0.02, min=-clamp_max,
           return grad
-  
+
       if args.diffusion_sampling_mode == 'ddim':
           sample_fn = diffusion.ddim_sample_loop_progressive
       else:
@@ -1085,9 +1242,9 @@ def do_run(_prompt):
                   randomize_class=randomize_class,
                   order=2,
               )
-          
-          for j, sample in enumerate(samples):    
-              OUTPUT_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + "_" + str(random.randint(1000, 9999)) 
+
+          for j, sample in enumerate(samples):
+              OUTPUT_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + "_" + str(random.randint(1000, 9999))
               cur_t -= 1
               intermediateStep = False
               if args.steps_per_checkpoint is not None:
@@ -1096,7 +1253,7 @@ def do_run(_prompt):
               elif j in args.intermediate_saves:
                 intermediateStep = True
               #with image_display:
-              
+
               if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
                   for k, image in enumerate(sample['pred_xstart']):
                       # tqdm.write(f'Batch {i}, step {j}, output {k}:')
@@ -1107,12 +1264,15 @@ def do_run(_prompt):
                         if cur_t == -1 and args.intermediates_in_subfolder is True:
                           save_num = f'{frame_num:04}' if animation_mode != "None" else i
                           filename = f'{args.batch_name}({args.batchNum})_{save_num}.png'
+                          print("setting filename 1")
                         else:
                           #If we're working with percentages, append it
                           if args.steps_per_checkpoint is not None:
                             filename = f'{args.batch_name}({args.batchNum})_{i:04}-{percent:02}%.png'
+                            print("setting filename 2")
                           # Or else, iIf we're working with specific steps, append those
                           else:
+                            print("setting filename 3")
                             filename = f'{args.batch_name}({args.batchNum})_{i:04}-{j:03}.png'
                       #Optional Soft Limiter
                       if args.soft_limiter_on == True:
@@ -1122,72 +1282,17 @@ def do_run(_prompt):
                       else:
                           #default clamping behavior
                           #clamp values to between 0 and 1
+                          print("dada")
                           image = TF.to_pil_image(image.add(1).div(2).clamp(0, 1))
-                      if j % args.display_rate == 0 or cur_t == -1:
-
-						# set filename to timestamp plus random number to avoid overwriting
-                        print("saving img")
-                        image.save('./outputs', OUTPUT_FILENAME + ".png")
-                        #display.clear_output(wait=True)
-                        #display.display(display.Image('progress.png'))
-                        #display histogram csa
-                        if args.display_histogram:
-                          hist_img=cv2.imread("progress.png")
-                          chans = cv2.split(hist_img)
-                          colors = ("b", "g", "r")
-                          plt.figure()
-                          #plt.title(f"B/G/R at {percent}%")
-                          plt.xlabel(f"{percent}% complete")
-                          plt.ylabel("% of Pixels")
-                          plt.gca().spines['right'].set_visible(False)
-                          plt.gca().spines['left'].set_visible(False)
-                          plt.gca().spines['bottom'].set_visible(False)
-                          plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2%}')) # 2 decimal places
-                          # loop over the image channels
-                          for (chan, color) in zip(chans, colors):
-                            # create a histogram for the current channel and plot it
-                            hist = cv2.calcHist([chan], [0], None, [256], [0, 256])
-                            hist /= hist.sum()
-                            plt.plot(hist, color=color)
-                            plt.xlim([0, 256])                      
-                      if args.steps_per_checkpoint is not None:
-                        if j % args.steps_per_checkpoint == 0 and j > 0:
-                          if args.intermediates_in_subfolder is True:
-                            image.save(f'{partialFolder}/{filename}')
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
-                      else:
-                        if j in args.intermediate_saves:
-                          if args.intermediates_in_subfolder is True:
-                            image.save(f'{partialFolder}/{filename}')
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
                       if cur_t == -1:
-                        if frame_num == 0:
-                          save_settings()
-                        if args.animation_mode != "None":
-                          image.save('prevFrame.png')
+                        #if frame_num == 0:
+                        #  save_settings(seed=args.seed)
+                        print("saving pil image dd")
                         image.save(f'{batchFolder}/{filename}')
-                        if args.animation_mode == "3D":
-                          # If turbo, save a blended image
-                          if turbo_mode and frame_num > 0:
-                            # Mix new image with prevFrameScaled
-                            blend_factor = (1)/int(turbo_steps)
-                            newFrame = cv2.imread('prevFrame.png') # This is already updated..
-                            prev_frame_warped = cv2.imread('prevFrameScaled.png')
-                            blendedImage = cv2.addWeighted(newFrame, blend_factor, prev_frame_warped, (1-blend_factor), 0.0)
-                            cv2.imwrite(f'{batchFolder}/{filename}',blendedImage)
-                          else:
-                            image.save(f'{batchFolder}/{filename}')
-  
-                          if vr_mode:
-                            generate_eye_views(TRANSLATION_SCALE, batchFolder, filename, frame_num, midas_model, midas_transform)
-  
-                        # if frame_num != args.max_frames-1:
-                        #   display.clear_output()
-              if cur_t < -1 : break # this is mainly used to account for skip_end_steps
-
-          plt.plot(np.array(loss_values), 'r')
+              if cur_t < -1 :
+                print("breaking, due to cur_t")
+                break # this is mainly used to account for skip_end_steps
+  return batchFolder, batch_name, batchNum
 
 def generate_eye_views(trans_scale,batchFolder,filename,frame_num,midas_model, midas_transform):
    for i in range(2):
@@ -1202,96 +1307,8 @@ def generate_eye_views(trans_scale,batchFolder,filename,frame_num,midas_model, m
                                                       args.fov, padding_mode=args.padding_mode,
                                                       sampling_mode=args.sampling_mode, midas_weight=args.midas_weight,spherical=True)
       eye_file_path = batchFolder+f"/frame_{frame_num:04}" + ('_l' if i==0 else '_r')+'.png'
+      print("saving pil image 6")
       transformed_image.save(eye_file_path)
-
-def save_settings():
-  setting_list = {
-    'text_prompts': text_prompts,
-    'image_prompts': image_prompts,
-    'clip_guidance_scale': clip_guidance_scale,
-    'tv_scale': tv_scale,
-    'range_scale': range_scale,
-    'sat_scale': sat_scale,
-    'sat_scale_buffer': sat_scale_buffer,
-    # 'cutn': cutn,
-    'cutn_batches': cutn_batches,
-    'soft_limiter_on': soft_limiter_on,
-    'soft_limiter_knee': soft_limiter_knee,
-    'init_image': init_image,
-    'init_scale': init_scale,
-    'skip_steps': skip_steps,
-    'skip_end_steps': skip_end_steps,
-    # 'zoom_per_frame': zoom_per_frame,
-    'max_frames': max_frames,
-    'interp_spline': interp_spline,
-    # 'rotation_per_frame': rotation_per_frame,
-    'frames_scale': frames_scale,
-    'frames_skip_steps': frames_skip_steps,
-    'perlin_init': perlin_init,
-    'perlin_mode': perlin_mode,
-    'skip_augs': skip_augs,
-    'randomize_class': randomize_class,
-    'clip_denoised': clip_denoised,
-    'clamp_grad': clamp_grad,
-    'clamp_max': clamp_max,
-    'seed': seed,
-    'fuzzy_prompt': fuzzy_prompt,
-    'rand_mag': rand_mag,
-    'eta': eta,
-    'width': width_height[0],
-    'height': width_height[1],
-    'diffusion_model': diffusion_model,
-    'use_secondary_model': use_secondary_model,
-    'steps': steps,
-    'diffusion_steps': diffusion_steps,
-    'diffusion_sampling_mode': diffusion_sampling_mode,
-    'ViTB32': ViTB32,
-    'ViTB16': ViTB16,
-    'ViTL14': ViTL14,
-    'RN101': RN101,
-    'RN50': RN50,
-    'RN50x4': RN50x4,
-    'RN50x16': RN50x16,
-    'RN50x64': RN50x64,
-    'cut_overview': str(cut_overview),
-    'cut_innercut': str(cut_innercut),
-    'cut_ic_pow': str(cut_ic_pow),
-    'cut_icgray_p': str(cut_icgray_p),
-    'key_frames': key_frames,
-    'max_frames': max_frames,
-    'angle': angle,
-    'zoom': zoom,
-    'translation_x': translation_x,
-    'translation_y': translation_y,
-    'translation_z': translation_z,
-    'rotation_3d_x': rotation_3d_x,
-    'rotation_3d_y': rotation_3d_y,
-    'rotation_3d_z': rotation_3d_z,
-    'midas_depth_model': midas_depth_model,
-    'midas_weight': midas_weight,
-    'near_plane': near_plane,
-    'far_plane': far_plane,
-    'fov': fov,
-    'padding_mode': padding_mode,
-    'sampling_mode': sampling_mode,
-    'video_init_path':video_init_path,
-    'extract_nth_frame':extract_nth_frame,
-    'video_init_seed_continuity': video_init_seed_continuity,
-    'turbo_mode':turbo_mode,
-    'turbo_steps':turbo_steps,
-    'turbo_preroll':turbo_preroll,
-    'noise_injector': noise_injector,
-    'noise_injector_threshold': noise_injector_threshold,
-    'noise_injector_px_size': noise_injector_px_size,
-    'noise_injector_sigma': noise_injector_sigma,
-    'noise_injector_spice': noise_injector_spice,
-    'noise_injector_mask_feather': noise_injector_mask_feather,
-    'copy_palette': copy_palette,
-    'copy_palette_image': copy_palette_image,
-  }
-  # print('Settings:', setting_list)
-  with open(f"{batchFolder}/{batch_name}({batchNum})_settings.txt", "w+") as f:   #save settings
-    json.dump(setting_list, f, ensure_ascii=False, indent=4)
 
 #@title 1.6 Define the secondary diffusion model
 
@@ -1464,7 +1481,7 @@ diffusion_model = "spritesheetdiffusion" #@param ["spritesheetdiffusion"]
 
 #@markdown If you enable the secondary model, beware: secondary *REALLY* likes making everything it can into buildings.
 use_secondary_model = False #@param {type: 'boolean'}
-diffusion_sampling_mode = 'ddim' #@param ['plms','ddim'] 
+diffusion_sampling_mode = 'ddim' #@param ['plms','ddim']
 
 
 #@markdown #####**CLIP settings:**
@@ -1499,18 +1516,18 @@ if diffusion_model == 'spritesheetdiffusion':
   if os.path.exists(model_spritesheetdiffusion_path) and check_model_SHA:
     print('Checking Sprite Sheet Diffusion Model File')
     with open(model_spritesheetdiffusion_path,"rb") as f:
-        bytes = f.read() 
+        bytes = f.read()
         hash = hashlib.sha256(bytes).hexdigest();
     if hash == model_spritesheetdiffusion_SHA:
       print('Sprite Sheet Diffusion SHA matches')
       model_spritesheetdiffusion_downloaded = True
-    else: 
+    else:
       print("Sprite Sheet Diffusion doesn't match, redownloading...")
       wget(model_spritesheetdiffusion_link, model_path)
       model_spritesheetdiffusion_downloaded = True
   elif os.path.exists(model_spritesheetdiffusion_path) and not check_model_SHA or model_spritesheetdiffusion_downloaded == True:
     print('Sprite Sheet Diffusion already downloaded, check check_model_SHA if the file is corrupt')
-  else:  
+  else:
     wget(model_spritesheetdiffusion_link, model_path)
     model_spritesheetdiffusion_downloaded = True
 
@@ -1521,18 +1538,18 @@ if use_secondary_model == True:
     print('Checking Secondary Diffusion File')
     print(model_secondary_path)
     with open(model_secondary_path,"rb") as f:
-        bytes = f.read() 
+        bytes = f.read()
         hash = hashlib.sha256(bytes).hexdigest();
     if hash == model_secondary_SHA:
       print('Secondary Model SHA matches')
       model_secondary_downloaded = True
-    else:  
+    else:
       print("Secondary Model SHA doesn't match, redownloading...")
       wget(model_secondary_link, model_path)
       model_secondary_downloaded = True
   elif os.path.exists(model_secondary_path) and not check_model_SHA or model_secondary_downloaded == True:
     print('Secondary Model already downloaded, check check_model_SHA if the file is corrupt')
-  else:  
+  else:
     wget(model_secondary_link, model_path)
     model_secondary_downloaded = True
 
@@ -1649,14 +1666,14 @@ if use_secondary_model:
     secondary_model.eval().requires_grad_(False).to(device)
 
 clip_models = []
-if ViTB32 is True: clip_models.append(clip.load('ViT-B/32', jit=False)[0].eval().requires_grad_(False).to(device)) 
-if ViTB16 is True: clip_models.append(clip.load('ViT-B/16', jit=False)[0].eval().requires_grad_(False).to(device) ) 
-if ViTL14 is True: clip_models.append(clip.load('ViT-L/14', jit=False)[0].eval().requires_grad_(False).to(device) ) 
+if ViTB32 is True: clip_models.append(clip.load('ViT-B/32', jit=False)[0].eval().requires_grad_(False).to(device))
+if ViTB16 is True: clip_models.append(clip.load('ViT-B/16', jit=False)[0].eval().requires_grad_(False).to(device) )
+if ViTL14 is True: clip_models.append(clip.load('ViT-L/14', jit=False)[0].eval().requires_grad_(False).to(device) )
 if RN50 is True: clip_models.append(clip.load('RN50', jit=False)[0].eval().requires_grad_(False).to(device))
-if RN50x4 is True: clip_models.append(clip.load('RN50x4', jit=False)[0].eval().requires_grad_(False).to(device)) 
-if RN50x16 is True: clip_models.append(clip.load('RN50x16', jit=False)[0].eval().requires_grad_(False).to(device)) 
-if RN50x64 is True: clip_models.append(clip.load('RN50x64', jit=False)[0].eval().requires_grad_(False).to(device)) 
-if RN101 is True: clip_models.append(clip.load('RN101', jit=False)[0].eval().requires_grad_(False).to(device)) 
+if RN50x4 is True: clip_models.append(clip.load('RN50x4', jit=False)[0].eval().requires_grad_(False).to(device))
+if RN50x16 is True: clip_models.append(clip.load('RN50x16', jit=False)[0].eval().requires_grad_(False).to(device))
+if RN50x64 is True: clip_models.append(clip.load('RN50x64', jit=False)[0].eval().requires_grad_(False).to(device))
+if RN101 is True: clip_models.append(clip.load('RN101', jit=False)[0].eval().requires_grad_(False).to(device))
 
 normalize = T.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
 lpips_model = lpips.LPIPS(net='vgg').to(device)
@@ -1665,7 +1682,7 @@ lpips_model = lpips.LPIPS(net='vgg').to(device)
 
 #@markdown ####**Basic Settings:**
 batch_name = 'Sprite_Sheet_Diffusion' #@param{type: 'string'}
-steps =  100#@param [25,50,100,150,250,500,1000]{type: 'raw', allow-input: true}
+steps =  25#@param [25,50,100,150,250,500,1000]{type: 'raw', allow-input: true}
 width_height = [256, 256]#@param{type: 'raw'}
 clip_guidance_scale = 15000 #@param{type: 'number'}
 tv_scale =  0#@param{type: 'number'}
@@ -1711,10 +1728,6 @@ model_config.update({
     'timestep_respacing': timestep_respacing,
     'diffusion_steps': diffusion_steps,
 })
-
-#Make folder for batch
-batchFolder = f'{outDirPath}/{batch_name}'
-createPath(batchFolder)
 
 """### Animation Settings"""
 
@@ -1810,15 +1823,15 @@ noise_injector = False #@param {type:"boolean"}
 noise_injector_threshold =  50#@param{type: 'integer'}
 #@markdown `noise_injector_threshold` if edge% falls below this %, will boost next frame. 20 is a good starting value.
 noise_injector_mix = 0.10 #@param{type: 'number'}
-#@markdown `noise_injector_mix` overall wet/dry mix for noise effect 0 - 1.0 
+#@markdown `noise_injector_mix` overall wet/dry mix for noise effect 0 - 1.0
 noise_injector_px_size =  1#@param{type: 'integer'}
 #@markdown `noise_injector_px_size` size of noise color blocks.
 noise_injector_spice = .10 #@param{type: 'number'}
 #@markdown `noise_injector_spice` adds random noise to color-matched noise. 0 - 1.0 ratio.
 noise_injector_mask_feather = 10 #@param{type: 'integer'}
-#@markdown `noise_injector_mask_feather` introduce soft edges at noise mask distance in px. 
+#@markdown `noise_injector_mask_feather` introduce soft edges at noise mask distance in px.
 noise_injector_sigma = 32 #@param{type: 'integer'}
-#@markdown `noise_injector_sigma` = size of 'clumps' in noise. higher is larger, 16-32 are good starting pt 
+#@markdown `noise_injector_sigma` = size of 'clumps' in noise. higher is larger, 16-32 are good starting pt
 
 #@markdown ####**Copy palette conform animation frames to color mix from palette_image (3D anim /noise inj only):**
 copy_palette = False#@param{type: 'boolean'}
@@ -1828,13 +1841,13 @@ copy_palette_image = "" #@param{type: 'string'}
 #======= VR MODE
 #@markdown ---
 #@markdown ####**VR Mode (3D anim only):**
-#@markdown Enables stereo rendering of left/right eye views (supporting Turbo) which use a different (fish-eye) camera projection matrix.   
+#@markdown Enables stereo rendering of left/right eye views (supporting Turbo) which use a different (fish-eye) camera projection matrix.
 #@markdown Note the images you're prompting will work better if they have some inherent wide-angle aspect
 #@markdown The generated images will need to be combined into left/right videos. These can then be stitched into the VR180 format.
 #@markdown Google made the VR180 Creator tool but subsequently stopped supporting it. It's available for download in a few places including https://www.patrickgrunwald.de/vr180-creator-download
 #@markdown The tool is not only good for stitching (videos and photos) but also for adding the correct metadata into existing videos, which is needed for services like YouTube to identify the format correctly.
 #@markdown Watching YouTube VR videos isn't necessarily the easiest depending on your headset. For instance Oculus have a dedicated media studio and store which makes the files easier to access on a Quest https://creator.oculus.com/manage/mediastudio/
-#@markdown 
+#@markdown
 #@markdown The command to get ffmpeg to concat your frames for each eye is in the form: `ffmpeg -framerate 15 -i frame_%4d_l.png l.mp4` (repeat for r)
 
 vr_mode = False #@param {type:"boolean"}
@@ -1862,7 +1875,7 @@ def parse_key_frames(string, prompt_parser=None):
         'framenumber1: (parametervalues1), framenumber2: (parametervalues2), ...'
     prompt_parser: function or None, optional
         If provided, prompt_parser will be applied to each string of parameter values.
-    
+
     Returns
     -------
     dict
@@ -1872,7 +1885,7 @@ def parse_key_frames(string, prompt_parser=None):
     ------
     RuntimeError
         If the input string does not match the expected format.
-    
+
     Examples
     --------
     >>> parse_key_frames("10:(Apple: 1| Orange: 0), 20: (Apple: 0| Orange: 1| Peach: 1)")
@@ -1912,12 +1925,12 @@ def get_inbetweens(key_frames, integer=False):
     integer: Bool, optional
         If True, the values of the output series are converted to integers.
         Otherwise, the values are floats.
-    
+
     Returns
     -------
     pd.Series
         A Series with length max_frames representing the parameter values for each frame.
-    
+
     Examples
     --------
     >>> max_frames = 5
@@ -1942,16 +1955,16 @@ def get_inbetweens(key_frames, integer=False):
     for i, value in key_frames.items():
         key_frame_series[i] = value
     key_frame_series = key_frame_series.astype(float)
-    
+
     interp_method = interp_spline
 
     if interp_method == 'Cubic' and len(key_frames.items()) <=3:
       interp_method = 'Quadratic'
-    
+
     if interp_method == 'Quadratic' and len(key_frames.items()) <= 2:
       interp_method = 'Linear'
-      
-    
+
+
     key_frame_series[0] = key_frame_series[key_frame_series.first_valid_index()]
     key_frame_series[max_frames-1] = key_frame_series[key_frame_series.last_valid_index()]
     # key_frame_series = key_frame_series.interpolate(method=intrp_method,order=1, limit_direction='both')
@@ -2099,7 +2112,7 @@ else:
 
 intermediate_saves = 0#@param{type: 'raw'}
 intermediates_in_subfolder = True #@param{type: 'boolean'}
-#@markdown Intermediate steps will save a copy at your specified intervals. You can either format it as a single integer or a list of specific steps 
+#@markdown Intermediate steps will save a copy at your specified intervals. You can either format it as a single integer or a list of specific steps
 
 #@markdown A value of `2` will save a copy at 33% and 66%. 0 will save none.
 
@@ -2115,10 +2128,6 @@ if type(intermediate_saves) is not list:
         steps_per_checkpoint = steps+10
 else:
     steps_per_checkpoint = None
-
-if intermediate_saves and intermediates_in_subfolder is True:
-    partialFolder = f'{batchFolder}/partials'
-    createPath(partialFolder)
 
 #@markdown ---
 
@@ -2150,12 +2159,12 @@ rand_mag = 0.05
 
 #@markdown cut_overview and cut_innercut are cumulative for total cutn on any given step. Overview cuts see the entire image and are good for early structure, innercuts are your standard cutn.
 
-cut_overview = "[14]*200+[12]*200+[4]*400+[0]*200" #@param {type: 'string'}       
-cut_innercut ="[2]*200+[4]*200+[12]*400+[12]*200"#@param {type: 'string'}  
+cut_overview = "[14]*200+[12]*200+[4]*400+[0]*200" #@param {type: 'string'}
+cut_innercut ="[2]*200+[4]*200+[12]*400+[12]*200"#@param {type: 'string'}
 
 #@markdown For Pixel Art Diffusion, [cut_ic_pow](https://ezcharts.miraheze.org/wiki/Category:Cut_ic_pow) values seem to represent pixel density. Values between 1 and 100 all work. Values are expressed as a string; if you like the effect of a singe value acros the board, use the format ```[n]*1000```.
 
-cut_ic_pow = "[100]*1000"#@param {type: 'string'}  
+cut_ic_pow = "[100]*1000"#@param {type: 'string'}
 cut_icgray_p = "[0.7]*100+[0.6]*100+[0.45]*100+[0.3]*100+[0]*600"#@param {type: 'string'}
 
 #@markdown ####**Transformation Settings:**
@@ -2169,14 +2178,14 @@ transformation_percent = [0.09] #@param
 ------
 
 #### Pixel Art Diffusion Prompts
-Although all PAD models are fine-tuned on pixel art, PAD still may need gentle reminders that you *do* want pixel art. This is especially true when using the Hard or Soft PAD models (though possibly not with Secondary enabled). 
+Although all PAD models are fine-tuned on pixel art, PAD still may need gentle reminders that you *do* want pixel art. This is especially true when using the Hard or Soft PAD models (though possibly not with Secondary enabled).
 
-Lack of pixelation isn't really an issue with simple prompts in PAD 4k or PAD Expanded, but longer/more complex prompts may benefit from extra nudging. When needing a little extra pixellation, a good rule of thumb for prompt structuring is to follow a format like: 
+Lack of pixelation isn't really an issue with simple prompts in PAD 4k or PAD Expanded, but longer/more complex prompts may benefit from extra nudging. When needing a little extra pixellation, a good rule of thumb for prompt structuring is to follow a format like:
 
 ```
 ["A cyberpunk city at sunset, #pixelart by van gogh","#pixelart"]
 ```
-With a multi-part prompt, try playing around with how many times you remind it to generate images in a pixel art style. For examples of prmpt structure given varying length of prompts, see the README at the top of the page! 
+With a multi-part prompt, try playing around with how many times you remind it to generate images in a pixel art style. For examples of prmpt structure given varying length of prompts, see the README at the top of the page!
 
 
 
@@ -2192,184 +2201,6 @@ text_prompts = {
 image_prompts = {
     # 0:['ImagePromptsWorkButArentVeryGood.png:2',],
 }
-
-"""# 4. Diffuse!"""
-
-#@title Do the Run!
-#@markdown `n_batches` ignored with animation modes.
-display_rate =  10 #@param{type: 'number'}
-n_batches =   9#@param{type: 'number'}
-display_histogram = False#@param{type: 'boolean'}
-
-#Update Model Settings
-timestep_respacing = f'ddim{steps}'
-diffusion_steps = (1000//steps)*steps if steps < 1000 else steps
-model_config.update({
-    'timestep_respacing': timestep_respacing,
-    'diffusion_steps': diffusion_steps,
-})
-
-batch_size = 1 
-
-def move_files(start_num, end_num, old_folder, new_folder):
-    for i in range(start_num, end_num):
-        old_file = old_folder + f'/{batch_name}({batchNum})_{i:04}.png'
-        new_file = new_folder + f'/{batch_name}({batchNum})_{i:04}.png'
-        os.rename(old_file, new_file)
-
-#@markdown ---
-
-
-resume_run = False #@param{type: 'boolean'}
-run_to_resume = 'latest' #@param{type: 'string'}
-resume_from_frame = 'latest' #@param{type: 'string'}
-retain_overwritten_frames = False #@param{type: 'boolean'}
-if retain_overwritten_frames:
-    retainFolder = f'{batchFolder}/retained'
-    createPath(retainFolder)
-
-skip_step_ratio = int(frames_skip_steps.rstrip("%")) / 100
-calc_frames_skip_steps = math.floor(steps * skip_step_ratio)
-
-
-if steps <= calc_frames_skip_steps:
-  sys.exit("ERROR: You can't skip more steps than your total steps")
-
-if resume_run:
-    if run_to_resume == 'latest':
-        try:
-            batchNum
-        except:
-            batchNum = len(glob(f"{batchFolder}/{batch_name}(*)_settings.txt"))-1
-    else:
-        batchNum = int(run_to_resume)
-    if resume_from_frame == 'latest':
-        start_frame = len(glob(batchFolder+f"/{batch_name}({batchNum})_*.png"))
-        if animation_mode != '3D' and turbo_mode == True and start_frame > turbo_preroll and start_frame % int(turbo_steps) != 0:
-            start_frame = start_frame - (start_frame % int(turbo_steps))
-    else:
-        start_frame = int(resume_from_frame)+1
-        if animation_mode != '3D' and turbo_mode == True and start_frame > turbo_preroll and start_frame % int(turbo_steps) != 0:
-            start_frame = start_frame - (start_frame % int(turbo_steps))
-        if retain_overwritten_frames is True:
-            existing_frames = len(glob(batchFolder+f"/{batch_name}({batchNum})_*.png"))
-            frames_to_save = existing_frames - start_frame
-            print(f'Moving {frames_to_save} frames to the Retained folder')
-            move_files(start_frame, existing_frames, batchFolder, retainFolder)
-else:
-    start_frame = 0
-    batchNum = len(glob(batchFolder+"/*.txt"))
-    while os.path.isfile(f"{batchFolder}/{batch_name}({batchNum})_settings.txt") or os.path.isfile(f"{batchFolder}/{batch_name}-{batchNum}_settings.txt"):
-        batchNum += 1
-
-print(f'Starting Run: {batch_name}({batchNum}) at frame {start_frame}')
-
-if set_seed == 'random_seed':
-    random.seed()
-    seed = random.randint(0, 2**32)
-    # print(f'Using seed: {seed}')
-else:
-    seed = int(set_seed)
-
-args = {
-    'batchNum': batchNum,
-    'prompts_series':split_prompts(text_prompts) if text_prompts else None,
-    'image_prompts_series':split_prompts(image_prompts) if image_prompts else None,
-    'seed': seed,
-    'display_rate':display_rate,
-    'n_batches':n_batches if animation_mode == 'None' else 1,
-    'batch_size':batch_size,
-    'batch_name': batch_name,
-    'steps': steps,
-    'diffusion_sampling_mode': diffusion_sampling_mode,
-    'width_height': width_height,
-    'clip_guidance_scale': clip_guidance_scale,
-    'tv_scale': tv_scale,
-    'range_scale': range_scale,
-    'sat_scale': sat_scale,
-    'sat_scale_buffer': sat_scale_buffer,
-    'cutn_batches': cutn_batches,
-    'soft_limiter_on': soft_limiter_on,
-    'soft_limiter_knee': soft_limiter_knee,
-    'init_image': init_image,
-    'init_scale': init_scale,
-    'skip_steps': skip_steps,
-    'skip_end_steps': skip_end_steps,
-    'side_x': side_x,
-    'side_y': side_y,
-    'timestep_respacing': timestep_respacing,
-    'diffusion_steps': diffusion_steps,
-    'animation_mode': animation_mode,
-    'video_init_path': video_init_path,
-    'extract_nth_frame': extract_nth_frame,
-    'video_init_seed_continuity': video_init_seed_continuity,
-    'key_frames': key_frames,
-    'max_frames': max_frames if animation_mode != "None" else 1,
-    'interp_spline': interp_spline,
-    'start_frame': start_frame,
-    'angle': angle,
-    'zoom': zoom,
-    'translation_x': translation_x,
-    'translation_y': translation_y,
-    'translation_z': translation_z,
-    'rotation_3d_x': rotation_3d_x,
-    'rotation_3d_y': rotation_3d_y,
-    'rotation_3d_z': rotation_3d_z,
-    'midas_depth_model': midas_depth_model,
-    'midas_weight': midas_weight,
-    'near_plane': near_plane,
-    'far_plane': far_plane,
-    'fov': fov,
-    'padding_mode': padding_mode,
-    'sampling_mode': sampling_mode,
-    'angle_series':angle_series,
-    'zoom_series':zoom_series,
-    'translation_x_series':translation_x_series,
-    'translation_y_series':translation_y_series,
-    'translation_z_series':translation_z_series,
-    'rotation_3d_x_series':rotation_3d_x_series,
-    'rotation_3d_y_series':rotation_3d_y_series,
-    'rotation_3d_z_series':rotation_3d_z_series,
-    'frames_scale': frames_scale,
-    'calc_frames_skip_steps': calc_frames_skip_steps,
-    'skip_step_ratio': skip_step_ratio,
-    'frames_skip_end_steps': frames_skip_end_steps,
-    'text_prompts': text_prompts,
-    'image_prompts': image_prompts,
-    'cut_overview': eval(cut_overview),
-    'cut_innercut': eval(cut_innercut),
-    'cut_ic_pow': eval(cut_ic_pow),
-    'cut_icgray_p': eval(cut_icgray_p),
-    'intermediate_saves': intermediate_saves,
-    'intermediates_in_subfolder': intermediates_in_subfolder,
-    'steps_per_checkpoint': steps_per_checkpoint,
-    'perlin_init': perlin_init,
-    'perlin_mode': perlin_mode,
-    'set_seed': set_seed,
-    'eta': eta,
-    'clamp_grad': clamp_grad,
-    'clamp_max': clamp_max,
-    'skip_augs': skip_augs,
-    'randomize_class': randomize_class,
-    'clip_denoised': clip_denoised,
-    'fuzzy_prompt': fuzzy_prompt,
-    'rand_mag': rand_mag,
-    'use_vertical_symmetry': use_vertical_symmetry,
-    'use_horizontal_symmetry': use_horizontal_symmetry,
-    'transformation_percent': transformation_percent,
-    'display_histogram': display_histogram,
-    'noise_injector': noise_injector,
-    'noise_injector_threshold': noise_injector_threshold,
-    'noise_injector_mix': noise_injector_mix,
-    'noise_injector_px_size': noise_injector_px_size,
-    'noise_injector_spice': noise_injector_spice,
-    'noise_injector_mask_feather': noise_injector_mask_feather,
-    'noise_injector_sigma': noise_injector_sigma,
-    'copy_palette': copy_palette,
-    'copy_palette_image': copy_palette_image,
-}
-
-args = SimpleNamespace(**args)
 
 model = None
 diffusion = None
@@ -2388,5 +2219,5 @@ def initModel():
 
 if __name__ == '__main__':
     initModel()
-    res = do_run("unicorn magician")
+    res = do_run("unicorn magician spritesheet")
     print("res:", res)
