@@ -6,6 +6,8 @@ import PIL
 from crop import crop
 from post_process import postprocessImg
 from cleaner import cleanImage
+import os.path
+import base64
 
 app = FastAPI()
 
@@ -21,8 +23,7 @@ async def root(s: str):
         res = do_run(s)
         print(res)
         filename = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_0.png"
-        preCutFileName = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_pre_cut_0.png"
-        cutFileName = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_cut_0.png"
+        b64Output = ""
 
         img = PIL.Image.open(filename)
         extrema = img.convert("L").getextrema()
@@ -56,13 +57,16 @@ async def root(s: str):
             if extrema == (0, 0):
                 isBlack = True
             else:
-                img.save(preCutFileName)
+                b64Output = "data:image/png;base64," + base64.b64encode(img.tobytes()).decode("utf-8")
                 isBlack = False
 
             
             #cutout(preCutFileName, "./mask.png", cutFileName)
 
-    return FileResponse(preCutFileName)
+    if os.path.exists(filename):
+        os.path.remove(filename)
+
+    return { "data": b64Output }
 
 
 if __name__ == "__main__":
