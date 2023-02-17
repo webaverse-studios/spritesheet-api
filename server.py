@@ -7,6 +7,7 @@ from crop import crop
 from post_process import postprocessImg
 from cleaner import cleanImage
 import os.path
+import os
 import base64
 
 app = FastAPI()
@@ -27,7 +28,7 @@ async def root(s: str):
 
         img = PIL.Image.open(filename)
         extrema = img.convert("L").getextrema()
-        if extrema == (0, 0):
+        if extrema == (0, 0) or extrema == (1, 1):
             isBlack = True
         else:
             isBlack = False
@@ -64,7 +65,7 @@ async def root(s: str):
             #cutout(preCutFileName, "./mask.png", cutFileName)
 
     if os.path.exists(filename):
-        os.path.remove(filename)
+        os.remove(filename)
 
     return { "data": b64Output }
 
