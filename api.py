@@ -1684,7 +1684,7 @@ lpips_model = lpips.LPIPS(net='vgg').to(device)
 
 #@markdown ####**Basic Settings:**
 batch_name = 'Sprite_Sheet_Diffusion' #@param{type: 'string'}
-steps =  100#@param [25,50,100,150,250,500,1000]{type: 'raw', allow-input: true}
+steps =  25#@param [25,50,100,150,250,500,1000]{type: 'raw', allow-input: true}
 width_height = [256, 256]#@param{type: 'raw'}
 clip_guidance_scale = 15000 #@param{type: 'number'}
 tv_scale =  0#@param{type: 'number'}
