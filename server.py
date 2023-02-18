@@ -69,7 +69,7 @@ async def root(s: str):
     if os.path.exists(filename):
         os.remove(filename)
     if os.path.exists(path):
-        os.remove(path)
+        os.rmdir(path)
 
     return { "data": b64Output }
 
