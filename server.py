@@ -1,13 +1,14 @@
 from fastapi import FastAPI
-from fastapi.responses import  StreamingResponse
+from fastapi.responses import FileResponse
 from api import initModel, do_run
+from pymatting import cutout
 import PIL
 from crop import crop
 from post_process import postprocessImg
 from cleaner import cleanImage
 import os.path
 import os
-import io
+import base64
 
 app = FastAPI()
 
@@ -23,12 +24,12 @@ async def root(s: str):
         res = do_run(s)
         print(res)
         path = res[0] + "/"
-        path = res[0] + "/" + res[1] + "(" + str(res[2]) + ").png"
         filename = res[0] + "/" + res[1] + "(" + str(res[2]) + ")_0.png"
+        b64Output = ""
 
         img = PIL.Image.open(filename)
         extrema = img.convert("L").getextrema()
-        if extrema == (0, 0):
+        if extrema == (0, 0) or extrema == (1, 1):
             isBlack = True
         else:
             isBlack = False
@@ -58,9 +59,7 @@ async def root(s: str):
             if extrema == (0, 0):
                 isBlack = True
             else:
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format='PNG')
-                img_byte_arr = img_byte_arr.getvalue()
+                b64Output = "data:image/png;base64," + base64.b64encode(img.tobytes()).decode("utf-8")
                 isBlack = False
 
             
@@ -70,9 +69,9 @@ async def root(s: str):
     if os.path.exists(filename):
         os.remove(filename)
     if os.path.exists(path):
-        os.remove(path)
+        os.rmdir(path)
 
-    return StreamingResponse(img_byte_arr)
+    return { "data": b64Output }
 
 
 if __name__ == "__main__":
